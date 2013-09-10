@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+#use Data::Dumper;
+
+my $words = '/usr/share/dict/british-english';
+open my $IN, '<', $words or die $!;
+1 while (<$IN>);
+my $line_count = $.;
+
+my $passwd = q();
+my $word_count = 0;
+while (10 > length $passwd or 2 > $word_count) {
+    seek $IN, $. = 0, 0;
+    my $line = int rand $line_count;
+    <$IN> for 1 .. $line;
+    chomp(my $word = <$IN>);
+    $word =~ s/'s//;
+    $passwd .= ucfirst $word;
+    $word_count++;
+}
+print "$passwd\n";

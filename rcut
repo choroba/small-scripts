@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+use Getopt::Std;
+getopts('hd:f:o:');
+if($opt_h){
+  print"rcut -f -d -o files...\nSame as cut -f -d --output-delimiter, but counts from right.\n";
+  exit;
+}
+if ($opt_d.$opt_o.$opt_f eq "") {
+  $opt_f='1';
+}
+
+$opt_d||="\t";
+$opt_o||=$opt_d;
+$opt_f=~s/-/../g;
+@idx=reverse map{-$_}eval"($opt_f)";
+while(<>){
+  chomp;
+  @fld=split/\Q$opt_d\E/;
+  print join($opt_o,@fld[@idx]),"\n";
+}

@@ -1,0 +1,25 @@
+#!/bin/bash
+COLS=$(stty --all | grep -o 'columns [0-9]*')
+COLS=${COLS#* }
+major=$(seq 1 $((COLS/10)) )
+
+
+for i in $major ; do
+    for j in {1..9} ; do
+        echo -n ' '
+    done
+    echo -n ${i: -1}
+done
+echo
+
+for i in $major; do
+    for j in {1..9} 0 ; do
+        echo -n $j
+    done
+done
+
+let rest=COLS%10
+for j in $(seq 1 $rest ) ; do
+    echo -n $j
+done
+echo

@@ -1,0 +1,18 @@
+#!/bin/bash
+if (( ${#@} == 0 )) || [[ $1 =~ ^-{1,2}[uhUH] ]]
+    then echo Usage: $0 [options] from to [files]
+    echo '  'Options: -f,-t : do not include from/to line
+else
+    frline='p;'
+    toline='p;'
+    while getopts ft arg ; do
+        case $arg in
+            f ) frline='' ;;
+            t ) toline='' ;;
+        esac
+    done
+    shift $((OPTIND-1))
+    FROM="$1"; shift 1
+    TO="$1"; shift 1
+    sed -n '/'"$FROM"'/ {'"$frline"'n;b c}; d;:c {/'"$TO"'/ {'"$toline"'d};p;n;b c}' "$@"
+fi

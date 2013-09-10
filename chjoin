@@ -1,0 +1,195 @@
+#!/usr/bin/perl
+# Author : E. Choroba
+
+use strict;
+use warnings;
+no warnings qw(uninitialized);
+
+use Getopt::Std;
+
+our $VERSION = 1.2;
+
+=item chjoin
+
+Normal C<join> from I<coreutils> was not enough for us because it
+worked strange on unsorted or duplicate lines. This one suits us
+better.
+
+=cut
+
+getopts('ha:e:it:v:o:1:2:D:');
+our ($opt_h, $opt_a, $opt_e, $opt_i, $opt_t, $opt_v, $opt_o,
+     $opt_1, $opt_2, $opt_D);
+if ($opt_h) {
+    print<<EOH;
+Usage: chjoin [options] file1 file2
+  where options are: (SIDE is 1 or 2)
+  (same as join):
+    -a SIDE   : print also unpairable lines coming from file SIDE
+    -e EMPTY  : replace missing fields with EMPTY
+    -h        : this help
+    -i        : ignore case
+    -t CHAR   : input separator (default <tab>)
+    -v SIDE   : process unpairable lines from file SIDE (not to be used with -a)
+    -o FORMAT : output format (of the form SIDE.FIELD,SIDE.FIELD,
+                default : match 1.* 2.*)
+    -1 FIELD  : join on field FIELD in file1 (default 1)
+    -2 FIELD  : join on field FIELD in file2 (default 1)
+  (the new one):
+    -D method : how to treat duplicate entries:
+
+                Method | Duplicates in | Matching
+                       | file1 | file2 |
+                -------+------ +-------+-------------------------------------
+                     0 |  no   |  warn | match with 1st occurence in file1
+                     1 |  no   |  yes  | generate all combinations
+                     2 |  yes  |  yes  | match one-to-one in respective order
+                     3 |  yes  |  yes  | generate all combinations
+
+EOH
+    exit;
+}
+die "You must specify two files. See chjoin -h.\n" if @ARGV != 2;
+die "Invalid method\n" if $opt_D and $opt_D !~ /^[0-3]$/;
+warn "Warning: both -a and -v used.\n" if $opt_a and $opt_v;
+open my $F1, $ARGV[0] or die "Cannot open $ARGV[0].\n";
+open my $F2, $ARGV[1] or die "Cannot open $ARGV[1].\n";
+$opt_t //= "\t";
+$opt_1 ||= 1; $opt_1--;
+$opt_2 ||= 1; $opt_2--;
+
+# Parse file 1
+
+my %hash;
+while (my $line = <$F1>) {
+    chomp $line;
+    my @fields = split/\Q$opt_t\E/, $line;
+    my $field = $fields[$opt_1];
+    $field = lc $field if $opt_i;
+    if ($opt_D < 2) {
+        if (exists $hash{$field}) {
+            my $j = join $opt_t, @{ $hash{$field} };
+            die <<"EOD";
+FATAL: Duplicate entry in file1: <$fields[$opt_1]>
+1: $j
+2: $line
+EOD
+        } else {
+            $hash{$field} = \@fields;
+        }
+    } else {
+        $hash{$field} = [] unless exists$hash{$field};
+        push @{ $hash{$field} }, \@fields;
+    }
+}
+
+# Parse file 2
+
+my @output;
+my @alines;
+my %to_undef;
+while (my$line = <$F2>) {
+    chomp $line;
+    my @fields = split/\Q$opt_t\E/, $line;
+    my $field = $fields[$opt_2];
+    $field = lc $field if $opt_i;
+    if (exists $hash{$field}) { # match
+        if (defined $hash{$field}) { # first match for D0, else just match
+            if ($opt_v != 1) {
+                if ($opt_D == 3) {
+                    for my $ref (@{ $hash{$field} }) {
+                        push @output, join ($opt_t, @$ref), $line
+                            unless $opt_v == 2;
+                    }
+                } else {
+                    my @match;
+                    if ($opt_D < 2){
+                        @match = @{ $hash{$field} };
+                    } else {
+                        @match = @{ shift @{ $hash{$field} } };
+                    }
+                    push @output, join($opt_t, @match), $line
+                        unless $opt_v == 2;
+                }
+            }
+            $hash{$field} = undef
+                if ! $opt_D or $opt_D > 1 && ! @{ $hash{$field} };
+            $to_undef{$field} = 1 if $opt_D > 0;
+        } else { # second match for D0
+            warn "Warning: Duplicate entry in file2: <$fields[$opt_2]>\n$line\n"
+                unless $opt_D;
+            push @output, q(), $line . "\n" if $opt_v == 2;
+            push @alines, $line if $opt_a == 2;
+        }
+    } else {
+        push @output, q(), $line . "\n" if $opt_v == 2;
+        push @alines, $line if $opt_a == 2;
+    }
+}
+
+@hash{ keys %to_undef } = undef;
+
+if ($opt_v == 1) {
+    if ($opt_D < 2) {
+        @output = map {
+            join($opt_t, @{ $hash{$_} }), "\n";
+        } grep defined $hash{$_},
+               keys %hash;
+    } else {
+        for (grep defined $hash{$_}, keys %hash) {
+            push @output, join($opt_t, @$_), "\n" for @{ $hash{$_} };
+        }
+    }
+}
+if ($opt_a == 1) {
+    if ($opt_D < 2) {
+        @alines = map {
+            join($opt_t, @{ $hash{$_} });
+        } grep defined $hash{$_},
+               keys %hash;
+    } else {
+        for (grep defined $hash{$_}, keys %hash) {
+            push @alines, join($opt_t, @$_) for @{ $hash{$_} };
+        }
+    }
+}
+
+# Format output
+
+chomp @output;
+for (my $i = 0; $i < @output; $i += 2) {
+    my $out;
+    my @fields1 = split /\Q$opt_t\E/, $output[$i];
+    my @fields2 = split /\Q$opt_t\E/, $output[$i + 1];
+    unless ($opt_o) {
+        if ($opt_v == 1) {
+            $opt_o = "1." . ($opt_1 + 1);
+        } else {
+            $opt_o = "2." . ($opt_2 + 1);
+        }
+        for (my $i = 1; $i <= @fields1; $i++) {
+            $opt_o .= ",1.$i" unless $i == $opt_1 + 1;
+        }
+        for (my $i = 1; $i <= @fields2; $i++){
+            $opt_o .= ",2.$i" unless $i == $opt_2 + 1;
+        }
+    }
+    for my $outf (split /,/ => $opt_o) {
+        if ($outf =~ /([12])\.([0-9]+)/) {
+            if ($1 eq'1') {
+                ($out .= (($_ = $fields1[$2 - 1]) ? $_
+                                                  : $opt_e)
+                         . $opt_t) unless $opt_v == 2;
+            } else {
+                ($out .= (($_ = $fields2[$2 - 1]) ? $_
+                                                  : $opt_e)
+                         . $opt_t) unless $opt_v == 1;
+            }
+        } else {
+            $out = "$outf$opt_t";
+        }
+    }
+    $out =~ s/.$/\n/;
+    print $out;
+}
+print "$_\n" for @alines;
