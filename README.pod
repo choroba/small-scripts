@@ -1,0 +1,14 @@
+=head1 NAME
+
+Small scripts
+
+=head1 DESCRIPTION
+
+Small shell and Perl scripts I use to run common tools and munge
+common data.
+
+=head1 Author
+
+(c) E. Choroba 2013
+
+=cut
