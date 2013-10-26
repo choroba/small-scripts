@@ -15,7 +15,7 @@ for arg ; do
     args+=("$file")
 done
 
-if [[ -e /tmp/emacs6208/server ]] ; then
+if [[ -e /tmp/emacs$UID/server ]] ; then
     [[ $nw ]] || nw=-n
     /usr/bin/emacsclient $nw "${args[@]}" 2>/dev/null
 else
