@@ -101,7 +101,7 @@ $line=~s:&under;:\\_:g;
 $line=~s:&times;:\$\\times\$:g;
 $line=~s:{\\[oO]}:\\$1:g;
 $line=~s:{o(([Aa]))}:\\$1$1:g;
-$line=~s:{(.)(.)}:\\$specials{$1}$2:g;
+$line=~s#{((.)(.))}#(exists $specials{$2}) ? "\\$specials{$2}$3" : "{$1}"#ge;
 print$line;
 print '}}' if $div;
 print"\\end{document}";
