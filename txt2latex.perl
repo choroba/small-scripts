@@ -69,7 +69,7 @@ $line=~s://:\\\\:g;
 $line=~s:(?<!<!)--(?!>):---:g;
 #$line=~s:(?<!{)"([^"]+)":\{\},,\{\}$1\{\}``\{\}:g;#quotedblbase,textquotedblleft
 $line=~s:(?<!{)"([^"]+)":\\quotedblbase\{\}$1\\textquotedblleft\{\}:g;
-$line=~s:'([^']+)':,$1\{}`:g;#quotesinglbase,textquoteleft
+$line=~s:'([^']+)':,$1\{\}`:g;#quotesinglbase,textquoteleft
 #$line=~s:,,:&bdquo;:g;
 #$line=~s:":&ldquo;:g;
 $line=~s:\\\$:&dolar;:g;
@@ -101,7 +101,7 @@ $line=~s:&under;:\\_:g;
 $line=~s:&times;:\$\\times\$:g;
 $line=~s:{\\[oO]}:\\$1:g;
 $line=~s:{o(([Aa]))}:\\$1$1:g;
-$line=~s:{(.)(.)}:\\$specials{$1}$2:g;
+$line=~s#{((.)(.))}#(exists $specials{$2}) ? "\\$specials{$2}$3" : "{$1}"#ge;
 print$line;
 print '}}' if $div;
 print"\\end{document}";
