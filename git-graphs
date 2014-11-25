@@ -1,0 +1,104 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use feature qw{ say };
+
+use List::Util qw{ max };
+use Getopt::Long qw( :config no_ignore_case_always );
+use Time::Piece;
+
+my ($weekdayfile, $dayfile, $monthfile, $weekfile)
+    = qw( weekday.png day_commits.png month_commits.png week_commits.png );
+my $user = '^';
+
+GetOptions(
+    'weekday|W=s' => \$weekdayfile,
+    'day|d=s'     => \$dayfile,
+    'month|m=s'   => \$monthfile,
+    'week|w=s'    => \$weekfile,
+    'user|u=s'    => \$user,
+) or die "Invalid command line option.\n";
+
+$user = qr/$user/;
+
+my (%weekday, %day_commits, %month_commits, %week_commits);
+
+load();
+draw_circ();
+draw_bar($dayfile,   'day', '%Y-%m-%d',        1, \%day_commits);
+draw_bar($monthfile, 'month', '%Y-%m', 2_000_000, \%month_commits);
+draw_bar($weekfile,  'week', '%Y-%j',    500_000, \%week_commits);
+
+exit;
+
+
+sub load {
+    open my $GIT, '-|', qw{ git log } or die $!;
+    my $include;
+    while (<$GIT>) {
+        $include = /$user/ if s/^Author: //;
+        if (s/^Date:\s+// and $include) {
+            s/ [-+][0-9]{4}\n//;  # Remove DST info.
+            chomp;
+
+            my $time = 'Time::Piece'->strptime($_, '%a %b %d %T %Y');
+            ++$weekday{ $time->day_of_week }{ $time->hour };
+            ++$day_commits{ $time->ymd };
+
+            my $year  = $time->year;
+            my $month = $time->mon;
+            ++$month_commits{ sprintf "$year-%02d", $month };
+
+            my $week = $time->week;
+            --$year if  1 == $month and 50 < $week;
+            ++$year if 12 == $month and 1 == $week;
+            ++$week_commits{ "$year-" . (7 * $week) };
+        }
+    }
+}
+
+
+sub draw_circ {
+    my $max = max(map values %$_, values %weekday);
+    open my $GNUPLOT, '|-', 'gnuplot' or die $!;
+    print {$GNUPLOT} << "__GNUPLOT__";
+        set term pngcairo size 1024, 600
+        set output "$weekdayfile"
+        set title "Commits per weekday"
+        set xrange [-1:24]
+        set yrange [-0.5:6.5]
+        set ytics("Mon" 6, "Tue" 5, "Wed" 4, "Thu" 3, "Fri" 2, "Sat" 1, "Sun" 0)
+        set xtics 0, 1, 23
+        plot '-' using 1:(7-\$2):3 with circles fs solid lc 3 notitle
+__GNUPLOT__
+
+    for my $day (keys %weekday) {
+        for my $hour (keys %{ $weekday{$day} }) {
+            say {$GNUPLOT} "$hour\t$day\t", $weekday{$day}{$hour} / 2 / $max;
+        }
+    }
+    close $GNUPLOT;
+}
+
+
+sub draw_bar {
+    my ($file, $period, $format, $width, $hash) = @_;
+    open my $GNUPLOT, '|-', 'gnuplot' or die $!;
+    print {$GNUPLOT} << "__GNUPLOT__";
+    set term pngcairo size 1800, 600
+    set output "$file"
+    set title "Commits per $period"
+    set yrange [0:]
+    set xdata time
+    set timefmt "$format"
+    set xtics format "%y/%m/%d"
+    plot '-' using 1:2:($width) with boxes fs solid notitle
+__GNUPLOT__
+
+    for my $date (keys %$hash) {
+        say {$GNUPLOT} "$date\t$hash->{$date}";
+    }
+    close $GNUPLOT;
+}
+
+
