@@ -4,30 +4,46 @@ use strict;
 use feature qw{ say };
 
 use List::Util qw{ max };
-use Getopt::Long qw( :config no_ignore_case_always );
+use Getopt::Long qw( :config no_ignore_case_always bundling );
 use Time::Piece;
+use Pod::Usage qw{ pod2usage };
 
 my ($weekdayfile, $dayfile, $monthfile, $weekfile)
     = qw( weekday.png day_commits.png month_commits.png week_commits.png );
 my $user = '^';
+my $prefix = q();
 
 GetOptions(
-    'weekday|W=s' => \$weekdayfile,
-    'day|d=s'     => \$dayfile,
-    'month|m=s'   => \$monthfile,
-    'week|w=s'    => \$weekfile,
-    'user|u=s'    => \$user,
+    'weekday|W'  => \ my $skip_weekday,
+    'day|d'      => \ my $skip_day,
+    'month|m'    => \ my $skip_month,
+    'week|w'     => \ my $skip_week,
+    'author|a=s' => \$user,
+    'prefix|p=s' => \$prefix,
+    'help|h'     => \ my $help,
+    'man|M'      => \ my $man,
 ) or die "Invalid command line option.\n";
 
+pod2usage(-verbose => 1,
+          -exitval => 0) if $help;
+
+pod2usage(-verbose => 2,
+          -exitval => 0) if $man;
+
+if ($skip_weekday and $skip_day and $skip_month and $skip_week) {
+    pod2usage('All graphs skipped!');
+}
+
 $user = qr/$user/;
+substr $_, 0, 0, $prefix for $weekdayfile, $dayfile, $monthfile, $weekfile;
 
 my (%weekday, %day_commits, %month_commits, %week_commits);
 
 load();
-draw_circ();
-draw_bar($dayfile,   'day', '%Y-%m-%d',        1, \%day_commits);
-draw_bar($monthfile, 'month', '%Y-%m', 2_000_000, \%month_commits);
-draw_bar($weekfile,  'week', '%Y-%j',    500_000, \%week_commits);
+draw_circ() unless $skip_weekday;
+draw_bar($dayfile,   'day', '%Y-%m-%d',  1, \%day_commits)   unless $skip_day;
+draw_bar($monthfile, 'month', '%Y-%m', 2e6, \%month_commits) unless $skip_month;
+draw_bar($weekfile,  'week', '%Y-%j',  5e5, \%week_commits)  unless $skip_week;
 
 exit;
 
@@ -42,17 +58,23 @@ sub load {
             chomp;
 
             my $time = 'Time::Piece'->strptime($_, '%a %b %d %T %Y');
-            ++$weekday{ $time->day_of_week }{ $time->hour };
-            ++$day_commits{ $time->ymd };
+            ++$weekday{ $time->day_of_week }{ $time->hour }
+                unless $skip_weekday;
+            ++$day_commits{ $time->ymd } unless $skip_day;
 
-            my $year  = $time->year;
-            my $month = $time->mon;
-            ++$month_commits{ sprintf "$year-%02d", $month };
+            if (not($skip_week and $skip_month)) {
+                my $year  = $time->year;
+                my $month = $time->mon;
+                ++$month_commits{ sprintf "$year-%02d", $month }
+                    unless $skip_month;
 
-            my $week = $time->week;
-            --$year if  1 == $month and 50 < $week;
-            ++$year if 12 == $month and 1 == $week;
-            ++$week_commits{ "$year-" . (7 * $week) };
+                next if $skip_week;
+
+                my $week = $time->week;
+                --$year if  1 == $month and 50 < $week;
+                ++$year if 12 == $month and 1 == $week;
+                ++$week_commits{ "$year-" . (7 * $week) };
+            }
         }
     }
 }
@@ -102,3 +124,67 @@ __GNUPLOT__
 }
 
 
+=head1 NAME
+
+git-graphs - Show git repo activity
+
+=head1 SYNOPSIS
+
+ git-graphs [-a AUTHOR-REGEX] [-p PREFIX] [-dwmW]
+ git-graphs [ -h | -M ]
+
+=head1 DESCRIPTION
+
+B<cd> to your git repository directory and run the script.
+
+B<git-graphs> can draw 4 types of activity graphs:
+
+=over 4
+
+=item Weekday
+
+For each weekday, show how many commits appear in each hour.
+
+=item Daily, Weekly, Monthly
+
+Show how many commits there are for each day, week, or month.
+
+=back
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-a AUTHOR-REGEX>
+
+Specify what regex the author must match to be included in the
+graphs. Default: C<^>, i.e. all authors.
+
+=item B<-p PREFIX>
+
+A string to be prepended to each output file name.
+
+=item B<-dwmW>
+
+What type of graph B<not> to draw: C<d> stands for daily, C<w> work
+weekly, C<m> for monthly, C<W> for weekday. It's an error to draw no
+graph.
+
+=item B<-h>, B<-M>
+
+Show help or the manual page.
+
+=back
+
+You can also use long options: --author, --prefix, --day, --week,
+--month, --weekday, --help, --man.
+
+=head1 DEPENDENCY
+
+git-graphs needs B<gnuplot> to draw the graphs.
+
+=head1 AUTHOR
+
+(c) E. Choroba 2014
+
+=cut
