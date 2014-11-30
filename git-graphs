@@ -88,8 +88,8 @@ sub draw_circ {
         set output "$weekdayfile"
         set title "Commits per weekday"
         set xrange [-1:24]
-        set yrange [-0.5:6.5]
-        set ytics("Mon" 6, "Tue" 5, "Wed" 4, "Thu" 3, "Fri" 2, "Sat" 1, "Sun" 0)
+        set yrange [0.5:7.5]
+        set ytics("Sun" 7, "Mon" 6, "Tue" 5, "Wed" 4, "Thu" 3, "Fri" 2, "Sat" 1)
         set xtics 0, 1, 23
         plot '-' using 1:(7-\$2):3 with circles fs solid lc 3 notitle
 __GNUPLOT__
