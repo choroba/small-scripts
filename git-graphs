@@ -5,11 +5,14 @@ use feature qw{ say };
 
 use List::Util qw{ max };
 use Getopt::Long qw( :config no_ignore_case_always bundling );
+use File::Temp qw{ tempfile };
 use Time::Piece;
 use Pod::Usage qw{ pod2usage };
 
-my ($weekdayfile, $dayfile, $monthfile, $weekfile)
-    = qw( weekday.png day_commits.png month_commits.png week_commits.png );
+my ($weekdayfile, $dayfile, $monthfile, $weekfile, $linesfile)
+    = qw( weekday.png day_commits.png month_commits.png week_commits.png
+          lines.png
+       );
 my $user = '^';
 my $prefix = q();
 
@@ -18,6 +21,7 @@ GetOptions(
     'day|d'      => \ my $skip_day,
     'month|m'    => \ my $skip_month,
     'week|w'     => \ my $skip_week,
+    'lines|l'    => \ my $skip_lines,
     'author|a=s' => \$user,
     'prefix|p=s' => \$prefix,
     'help|h'     => \ my $help,
@@ -30,34 +34,37 @@ pod2usage(-verbose => 1,
 pod2usage(-verbose => 2,
           -exitval => 0) if $man;
 
-if ($skip_weekday and $skip_day and $skip_month and $skip_week) {
+if ($skip_weekday and $skip_day and $skip_month and $skip_week and $skip_lines) {
     pod2usage('All graphs skipped!');
 }
 
 $user = qr/$user/;
-substr $_, 0, 0, $prefix for $weekdayfile, $dayfile, $monthfile, $weekfile;
+substr $_, 0, 0, $prefix
+    for $weekdayfile, $dayfile, $monthfile, $weekfile, $linesfile;
 
-my (%weekday, %day_commits, %month_commits, %week_commits);
+my (%weekday, %day_commits, %month_commits, %week_commits, %lines);
 
 load();
 draw_circ() unless $skip_weekday;
 draw_bar($dayfile,   'day', '%Y-%m-%d',  1, \%day_commits)   unless $skip_day;
 draw_bar($monthfile, 'month', '%Y-%m', 2e6, \%month_commits) unless $skip_month;
 draw_bar($weekfile,  'week', '%Y-%j',  5e5, \%week_commits)  unless $skip_week;
+draw_lines($linesfile, \%lines) unless $skip_lines;
 
 exit;
 
 
 sub load {
-    open my $GIT, '-|', qw{ git log } or die $!;
+    open my $GIT, '-|', qw{ git log --stat} or die $!;
     my $include;
+    my $date;
     while (<$GIT>) {
         $include = /$user/ if s/^Author: //;
         if (s/^Date:\s+// and $include) {
             s/ [-+][0-9]{4}\n//;  # Remove DST info.
             chomp;
-
             my $time = 'Time::Piece'->strptime($_, '%a %b %d %T %Y');
+            $date = $time->ymd;
             ++$weekday{ $time->day_of_week }{ $time->hour }
                 unless $skip_weekday;
             ++$day_commits{ $time->ymd } unless $skip_day;
@@ -75,6 +82,14 @@ sub load {
                 ++$year if 12 == $month and 1 == $week;
                 ++$week_commits{ "$year-" . (7 * $week) };
             }
+        }
+
+        if ($date and not $skip_lines and /^\s+\d+ file changed/) {
+            my ($plus) = /(\d+) insertions?/;
+            my ($minus) = /(\d+) deletions?/;
+            $_ ||= 0 for $plus, $minus;
+            $lines{plus}{$date}  += $plus;
+            $lines{minus}{$date} += $minus;
         }
     }
 }
@@ -124,20 +139,46 @@ __GNUPLOT__
 }
 
 
+sub draw_lines {
+    my ($file, $per_day) = @_;
+    my ($TMP, $tmpfile) = tempfile();
+
+    say {$TMP} "$_\t$per_day->{plus}{$_}"  for sort keys %{ $per_day->{plus} };
+    say {$TMP} "\n";
+    say {$TMP} "$_\t$per_day->{minus}{$_}" for sort keys %{ $per_day->{minus} };
+    close $TMP or die $!;
+
+    open my $GNUPLOT, '|-', 'gnuplot' or die $!;
+    print {$GNUPLOT} << "__GNUPLOT__";
+    set term pngcairo size 1800, 600
+    set output "$file"
+    set title "Lines of code"
+    set xdata time
+    set timefmt "%Y-%m-%d"
+    set xtics format "%y/%m/%d"
+    set xzeroaxis lt 1 lc 0
+    plot '$tmpfile' index 0 using 1:2 with steps lc 2 title "+", \\
+          '' index 1 using 1:(-\$2) with steps lc 1 title "-"
+__GNUPLOT__
+
+    close $GNUPLOT;
+}
+
+
 =head1 NAME
 
 git-graphs - Show git repo activity
 
 =head1 SYNOPSIS
 
- git-graphs [-a AUTHOR-REGEX] [-p PREFIX] [-dwmW]
+ git-graphs [-a AUTHOR-REGEX] [-p PREFIX] [-dwmWl]
  git-graphs [ -h | -M ]
 
 =head1 DESCRIPTION
 
 B<cd> to your git repository directory and run the script.
 
-B<git-graphs> can draw 4 types of activity graphs:
+B<git-graphs> can draw 5 types of activity graphs:
 
 =over 4
 
@@ -148,6 +189,10 @@ For each weekday, show how many commits appear in each hour.
 =item Daily, Weekly, Monthly
 
 Show how many commits there are for each day, week, or month.
+
+=item Lines
+
+Shows how many lines were added and/or deleted.
 
 =back
 
@@ -164,11 +209,11 @@ graphs. Default: C<^>, i.e. all authors.
 
 A string to be prepended to each output file name.
 
-=item B<-dwmW>
+=item B<-dwmWl>
 
 What type of graph B<not> to draw: C<d> stands for daily, C<w> work
-weekly, C<m> for monthly, C<W> for weekday. It's an error to draw no
-graph.
+weekly, C<m> for monthly, C<W> for weekday, C<l> for lines. It's an
+error to draw no graph.
 
 =item B<-h>, B<-M>
 
@@ -177,7 +222,7 @@ Show help or the manual page.
 =back
 
 You can also use long options: --author, --prefix, --day, --week,
---month, --weekday, --help, --man.
+--month, --weekday, --lines, --help, --man.
 
 =head1 DEPENDENCY
 
