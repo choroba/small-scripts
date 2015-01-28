@@ -17,15 +17,16 @@ my $user = '^';
 my $prefix = q();
 
 GetOptions(
-    'weekday|W'  => \ my $skip_weekday,
-    'day|d'      => \ my $skip_day,
-    'month|m'    => \ my $skip_month,
-    'week|w'     => \ my $skip_week,
-    'lines|l'    => \ my $skip_lines,
-    'author|a=s' => \$user,
-    'prefix|p=s' => \$prefix,
-    'help|h'     => \ my $help,
-    'man|M'      => \ my $man,
+    'weekday|W'     => \ my $skip_weekday,
+    'day|d'         => \ my $skip_day,
+    'month|m'       => \ my $skip_month,
+    'week|w'        => \ my $skip_week,
+    'lines|l'       => \ my $skip_lines,
+    'loc-limit|L=i' => \ my $loc_limit,
+    'author|a=s'    => \$user,
+    'prefix|p=s'    => \$prefix,
+    'help|h'        => \ my $help,
+    'man|M'         => \ my $man,
 ) or die "Invalid command line option.\n";
 
 pod2usage(-verbose => 1,
@@ -36,6 +37,10 @@ pod2usage(-verbose => 2,
 
 if ($skip_weekday and $skip_day and $skip_month and $skip_week and $skip_lines) {
     pod2usage('All graphs skipped!');
+}
+
+if ($skip_lines and defined $loc_limit) {
+    warn "WARNING: loc-limit has no meaning when lines are skipped.\n";
 }
 
 $user = qr/$user/;
@@ -148,6 +153,9 @@ sub draw_lines {
     say {$TMP} "$_\t$per_day->{minus}{$_}" for sort keys %{ $per_day->{minus} };
     close $TMP or die $!;
 
+    my $data_lines = defined $loc_limit
+                   ? "\$2 > $loc_limit ? $loc_limit : \$2"
+                   : '$2';
     open my $GNUPLOT, '|-', 'gnuplot' or die $!;
     print {$GNUPLOT} << "__GNUPLOT__";
     set term pngcairo size 1800, 600
@@ -157,8 +165,8 @@ sub draw_lines {
     set timefmt "%Y-%m-%d"
     set xtics format "%y/%m/%d"
     set xzeroaxis lt 1 lc 0
-    plot '$tmpfile' index 0 using 1:2 with steps lc 2 title "+", \\
-          '' index 1 using 1:(-\$2) with steps lc 1 title "-"
+    plot '$tmpfile' index 0 using 1:($data_lines) with steps lc 2 title "+", \\
+          '' index 1 using 1:(-($data_lines)) with steps lc 1 title "-"
 __GNUPLOT__
 
     close $GNUPLOT;
@@ -171,7 +179,7 @@ git-graphs - Show git repo activity
 
 =head1 SYNOPSIS
 
- git-graphs [-a AUTHOR-REGEX] [-p PREFIX] [-dwmWl]
+ git-graphs [-a AUTHOR-REGEX] [-p PREFIX] [-dwmWl] [-L LIMIT]
  git-graphs [ -h | -M ]
 
 =head1 DESCRIPTION
@@ -215,6 +223,10 @@ What type of graph B<not> to draw: C<d> stands for daily, C<w> work
 weekly, C<m> for monthly, C<W> for weekday, C<l> for lines. It's an
 error to draw no graph.
 
+=item B<-L LIMIT>
+
+In the "lines" graph, don't show values greater then LIMIT.
+
 =item B<-h>, B<-M>
 
 Show help or the manual page.
@@ -222,7 +234,7 @@ Show help or the manual page.
 =back
 
 You can also use long options: --author, --prefix, --day, --week,
---month, --weekday, --lines, --help, --man.
+--month, --weekday, --lines, --loc-limit, --help, --man.
 
 =head1 DEPENDENCY
 
