@@ -89,7 +89,7 @@ sub load {
             }
         }
 
-        if ($date and not $skip_lines and /^\s+\d+ file changed/) {
+        if ($date and not $skip_lines and /^\s+\d+ files? changed/) {
             my ($plus) = /(\d+) insertions?/;
             my ($minus) = /(\d+) deletions?/;
             $_ ||= 0 for $plus, $minus;
