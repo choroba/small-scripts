@@ -156,11 +156,13 @@ sub draw_lines {
     my $data_lines = defined $loc_limit
                    ? "\$2 > $loc_limit ? $loc_limit : \$2"
                    : '$2';
+    my $title = 'Lines of code';
+    $title .= " (limit $loc_limit)" if defined $loc_limit;
     open my $GNUPLOT, '|-', 'gnuplot' or die $!;
     print {$GNUPLOT} << "__GNUPLOT__";
     set term pngcairo size 1800, 600
     set output "$file"
-    set title "Lines of code"
+    set title "$title"
     set xdata time
     set timefmt "%Y-%m-%d"
     set xtics format "%y/%m/%d"
