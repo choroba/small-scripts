@@ -244,6 +244,6 @@ git-graphs needs B<gnuplot> to draw the graphs.
 
 =head1 AUTHOR
 
-(c) E. Choroba 2014
+(c) E. Choroba 2015
 
 =cut
