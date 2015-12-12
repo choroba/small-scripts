@@ -13,6 +13,7 @@ if [[ $pids ]] ; then
         id=${id%% *}
         if [[ $id ]] ; then
             wmctrl -i -a "$id"
+            wmctrl -i -a "$id"  # Needed after a desktop change.
             ok=1
         fi
     done <<< "$pids"
