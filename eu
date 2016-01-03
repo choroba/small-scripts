@@ -1,0 +1,2 @@
+#!/bin/bash
+emacsclient -e '(let ((coding-system-for-read '\''utf-8)) (find-file "'"$1"'"))'
