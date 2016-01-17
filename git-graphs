@@ -70,7 +70,8 @@ sub load {
             chomp;
             my $time = 'Time::Piece'->strptime($_, '%a %b %d %T %Y');
             $date = $time->ymd;
-            ++$weekday{ $time->day_of_week }{ $time->hour }
+            my $dow = $time->day_of_week;
+            ++$weekday{$dow}{ $time->hour }
                 unless $skip_weekday;
             ++$day_commits{ $time->ymd } unless $skip_day;
 
@@ -82,10 +83,14 @@ sub load {
 
                 next if $skip_week;
 
-                my $week = $time->week;
-                --$year if  1 == $month and 50 < $week;
-                ++$year if 12 == $month and 1 == $week;
-                ++$week_commits{ "$year-" . (7 * $week) };
+                # Rewind to nearest Monday.
+                $dow--;
+                $dow = 6 if -1 == $dow;
+                $time -= $dow * 24 * 60 * 60;
+                $year = $time->year;
+                my $monday = 1 + $time->yday;
+
+                ++$week_commits{ "$year-$monday" };
             }
         }
 
