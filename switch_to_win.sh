@@ -20,5 +20,8 @@ if [[ $pids ]] ; then
 fi
 
 if ((!ok)) ; then
-    warn "$1"
+    (   app=$1
+        app=${app%-gtk}
+        "$app" || warn "Cannot find or start $1"
+    ) &
 fi
