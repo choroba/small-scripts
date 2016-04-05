@@ -18,14 +18,16 @@ sub wanted {
                    qr/^\s* ((sub) \s+ (\w+)) /xm,
                    qr/^\s* ((alias) \s+ (\w+)) /xm,
                    qr/^\s* ((has) \s+ (?:["']\+?)? (\w+)) /xm,
-                   qr/^\s* ((has) \s+ \[ \s* qw \s* . \s* ([^)]+)) /xm,
+                   qr/^\s* ((has) \s+ \[ \s* qw \s* . \s* ([^)\]\/>]+)) /xm,
                   ) {
         while ($code =~ /$regex/g) {
             my ($full, $keyword, $funcs) = ($1, $2, $3);
             for my $func (split ' ', $funcs) {
                 my $pos = pos($code) - length $full;
                 my $nl_count = substr($code, 0, $pos) =~ tr/\n//;
-                $found{$keyword}{$funcs} = [$nl_count + 1, $pos];
+                my ($single_line) = $full =~ /(.*\Q$func\E.*)/g;
+                warn "$full\n\t[$single_line]";
+                $found{$keyword}{$func} = [$nl_count + 1, $pos, $single_line];
             }
         }
     }
@@ -35,13 +37,13 @@ sub wanted {
     my $string = join "\n",
                  map {
                      my $keyword = $_;
-                     map "$keyword $_\x7f\x01"
+                     map "$found{$keyword}{$_}[2]\x7f\x01"
                          . "$found{$keyword}{$_}[0],$found{$keyword}{$_}[1]",
                      keys %{ $found{$keyword} }
                  }
                  keys %found;
     say $path, ',', 1 + length $string;
-    say $string, "\n";
+    say $string;
 }
 
 
