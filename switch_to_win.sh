@@ -9,7 +9,7 @@ app='['${app:0:1}"]${app:1}"
 pids=$(ps x -ocomm,pid | grep "$app")
 if [[ $pids ]] ; then
     while read app pid ; do
-        id=$(wmctrl -p -l | grep " $pid \+$HOSTNAME")
+        id=$(wmctrl -p -l | grep " $pid \+\($HOSTNAME\|N/A\)")
         id=${id%% *}
         if [[ $id ]] ; then
             wmctrl -i -a "$id"
