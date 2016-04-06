@@ -19,6 +19,7 @@ sub wanted {
                    qr/^(\s* (alias) \s+ (\w+)) /xm,
                    qr/^(\s* (has) \s+ (?:["']\+?)? (\w+)) /xm,
                    qr/^(\s* (has) \s+ \[ \s* qw \s* . \s* ([^)\]\/>]+)) /xm,
+                   qr/^(\s* \{? \s* (package) \s+ ([\w:]+)) /xm,
                   ) {
         while ($code =~ /$regex/g) {
             my ($full, $keyword, $funcs) = ($1, $2, $3);
@@ -108,4 +109,8 @@ use MooseX::Declare;
 
 class Etags::Test2 {
     method method3 (Num $count) {}
+}
+
+{ package Inner::Package;
+
 }
