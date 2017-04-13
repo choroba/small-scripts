@@ -1,0 +1,53 @@
+#! /usr/bin/perl
+use warnings;
+use strict;
+use feature qw{ say };
+use Syntax::Construct '//';
+
+use File::Find;
+use Digest::MD5 qw{ md5_hex };
+
+@ARGV or @ARGV = '.';
+
+my %size;
+for my $path (@ARGV) {
+    if (-d $path) {
+        find({ wanted => \&search, no_chdir => 1 }, $path);
+    } else {
+        search($path);
+    }
+}
+
+sub search {
+    my $file = shift // $File::Find::name;
+    if (-f $file) {
+        push @{ $size{-s $file} }, $file;
+    }
+}
+
+for my $s (keys %size) {
+    next if 1 == ( my @files = @{ $size{$s} } );
+    my %md5;
+    for my $f (@files) {
+        open my $FH, '<', $f or die $!;
+        my $digest = md5_hex( do { local $/; <$FH> } );
+        push @{ $md5{$digest} }, $f;
+    }
+    for my $digest (keys %md5) {
+        next if 1 == ( my @same = @{ $md5{$digest} } );
+        say "-- $s $digest --";
+        say for @same;
+        say q();
+    }
+}
+
+=head1 NAME
+
+dups - search for files with duplicate contents
+
+=head1 SYNOPSIS
+
+  dups
+  dups file1 file2 /path/to/dir1
+
+=cut
