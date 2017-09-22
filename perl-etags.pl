@@ -37,7 +37,7 @@ sub wanted {
     my $string = join "\n",
                  map {
                      my $keyword = $_;
-                     map "$found{$keyword}{$_}[2]\x7f\x01"
+                     map "$found{$keyword}{$_}[2]\x7f"
                          . "$found{$keyword}{$_}[0],$found{$keyword}{$_}[1]",
                      keys %{ $found{$keyword} }
                  }
