@@ -8,6 +8,7 @@ shift
 
 declare -A status
 for i in $(seq 1 "$times") ; do
+    echo "$i/$times" >&2
     "$@"
     (( status[$?]++ ))
 done
