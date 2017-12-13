@@ -22,6 +22,7 @@ fi
 if ((!ok)) ; then
     (   app=$1
         app=${app%-gtk}
-        "$app" || warn "Cannot find or start $1"
+        type "$app" &>/dev/null || warn "Cannot find or start $1"
+        "$app"
     ) &
 fi
