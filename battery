@@ -1,0 +1,38 @@
+#! /bin/bash
+cols=$(stty --all | grep -o 'columns [0-9]*')
+cols=${cols#* }
+
+
+max=$(($(
+    grep -h 'last full capacity' /proc/acpi/battery/BAT*/info |
+        cut -f2 -d: | tr -d '\n' | sed s/mWh/+/g
+)0))
+current=$(($(
+    grep -h 'remaining capacity' /proc/acpi/battery/BAT*/state |
+        cut -f2 -d: | tr -d '\n' | sed s/mWh/+/g
+)0))
+
+percent=$( bc -l <<< "100 * ($current) / ($max)" )
+
+if [[ $1 ]] ; then
+    rmax=cols
+    rperc=$(( ${percent%.*} * cols / 100 ))
+    for (( i=1; i<rmax; i++ )) ; do
+        printf -
+    done
+    echo
+    for (( i=1; i<rmax; i++ )) ; do
+        if ((i<rperc)) ; then
+            printf $'\e[0;32mX'
+        else
+            printf $'\e[1;31m|'
+        fi
+    done
+    echo $'\e[0m'
+    for (( i=1; i<rmax; i++ )) ; do
+        printf -
+    done
+    echo
+else
+    echo $percent
+fi
