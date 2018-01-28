@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+my ($bundle_file) =  @ARGV;
+
+open my $in, '<', $bundle_file or die $!;
+
+$_ = <$in> until /^=head1 CONTENTS/ || eof;
+
+my @install;
+while (<$in>) {
+    last if /^=head1/;
+
+    my ($dist, $version) = split or next;
+
+    0 == system $^X, '-M'.$dist, '-e1'
+        or push @install, $dist;
+}
+close $in;
+
+print "Going to install:\n";
+print "@install\n";
+
+exec 'cpan', @install if @install;
+
