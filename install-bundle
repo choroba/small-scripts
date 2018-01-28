@@ -14,8 +14,13 @@ while (<$in>) {
 
     my ($dist, $version) = split or next;
 
-    0 == system $^X, '-M'.$dist, '-e1'
-        or push @install, $dist;
+    print "$dist\r";
+    if (0 == system $^X, '-M'.$dist, '-e1') {
+        print ' ' x length $dist, "\r";
+    } else {
+        push @install, $dist;
+        print "\n";
+    }
 }
 close $in;
 
