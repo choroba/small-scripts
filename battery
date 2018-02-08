@@ -5,11 +5,11 @@ cols=${cols#* }
 
 max=$(($(
     grep -h 'last full capacity' /proc/acpi/battery/BAT*/info |
-        cut -f2 -d: | tr -d '\n' | sed s/mWh/+/g
+        cut -f2 -d: | tr -d '\n' | sed 's/m[AW]h/+/g'
 )0))
 current=$(($(
     grep -h 'remaining capacity' /proc/acpi/battery/BAT*/state |
-        cut -f2 -d: | tr -d '\n' | sed s/mWh/+/g
+        cut -f2 -d: | tr -d '\n' | sed 's/m[AW]h/+/g'
 )0))
 
 percent=$( bc -l <<< "100 * ($current) / ($max)" )
