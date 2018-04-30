@@ -38,6 +38,7 @@ sub wanted {
                  map {
                      my $keyword = $_;
                      map "$found{$keyword}{$_}[2]\x7f"
+                         . "$_\x01"
                          . "$found{$keyword}{$_}[0],$found{$keyword}{$_}[1]",
                      keys %{ $found{$keyword} }
                  }
