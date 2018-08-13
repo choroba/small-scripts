@@ -20,7 +20,7 @@ for file ; do
     if [[ -f $file ]] ; then
         if [[ $file -nt $file.html ]] ; then
             emacsclient --eval '(htmlize-file "'"$file"'")' &> /dev/null
-            [[ $file.html -nt $file ]]
+            ! [[ $file -ot $file.html ]]
         else
             echo "$file.html" already exists >&2
         fi
