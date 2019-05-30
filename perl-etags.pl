@@ -15,7 +15,7 @@ sub wanted {
     my $code = $path->slurp;
     my %found;
     for my $regex (
-                   qr/^(\s* (sub | method) \s+ (\w+)) /xm,
+                   qr/^(\s* (sub | method | fun) \s+ (\w+)) /xm,
                    qr/^(\s* (alias) \s+ (\w+)) /xm,
                    qr/^(\s* (has) \s+ (?:["']\+?)? (\w+)) /xm,
                    qr/^(\s* (has) \s+ \[ \s* qw \s* . \s* ([^)\]\/>]+)) /xm,
