@@ -3,5 +3,10 @@
 
 pid=$1
 read __ command < <(ps x -o pid,args | grep "^ *$pid ")
-kill $pid || kill -9 $pid
+
+for sig in TERM INT QUIT ABRT KILL ; do
+    kill -$sig $pid && break
+    sleep 1
+done
+
 $command & disown
