@@ -60,7 +60,7 @@ exit;
 
 
 sub load {
-    open my $GIT, '-|', qw{ git log --stat} or die $!;
+    open my $GIT, '-|', qw{ git log --numstat} or die $!;
     my $include;
     my $date;
     while (<$GIT>) {
@@ -94,10 +94,9 @@ sub load {
             }
         }
 
-        if ($include && $date && ! $skip_lines && /^\s+\d+ files? changed/) {
-            my ($plus) = /(\d+) insertions?/;
-            my ($minus) = /(\d+) deletions?/;
-            $_ ||= 0 for $plus, $minus;
+        if ($include && $date && ! $skip_lines
+            && (my ($plus, $minus) = /^([0-9]+)\s*([0-9]+)/)
+        ) {
             $lines{plus}{$date}  += $plus;
             $lines{minus}{$date} += $minus;
         }
