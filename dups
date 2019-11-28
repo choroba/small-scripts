@@ -21,7 +21,7 @@ for my $path (@ARGV) {
 sub search {
     my $file = shift // $File::Find::name;
     if (-f $file) {
-        push @{ $size{-s $file} }, $file;
+        push @{ $size{-s $file} }, $file unless -l $file;
     }
 }
 
