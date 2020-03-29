@@ -2,6 +2,14 @@
 
 # Turn off keyboard layout when screensaver starts.
 
+get_switch () {
+    if ps x | grep -q '[s]ynergyc' ; then
+        switch=ctrls
+    else
+        switch=shifts
+    fi
+}
+
 (
     shopt -s extglob
     xscreensaver-command -watch | while read state x ; do
@@ -13,10 +21,11 @@
                 sleep .1
             done
         elif [[ $state == UNBLANK ]] ; then
+            get_switch
             until setxkbmap -query | grep 'layout: *us,cz' ; do
                 setxkbmap -option '' \
                           -option ctrl:nocaps us,'cz(qwerty)' \
-                          -option grp:shift_toggle
+                          -option grp:${switch}_toggle
                 sleep .1
             done
         fi
