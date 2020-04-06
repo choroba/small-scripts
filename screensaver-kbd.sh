@@ -8,6 +8,7 @@ get_switch () {
     else
         switch=shifts
     fi
+    printf '%s\n' "$switch"
 }
 
 (
@@ -21,7 +22,7 @@ get_switch () {
                 sleep .1
             done
         elif [[ $state == UNBLANK ]] ; then
-            get_switch
+            switch=$(get_switch)
             until setxkbmap -query | grep 'layout: *us,cz' ; do
                 setxkbmap -option '' \
                           -option ctrl:nocaps us,'cz(qwerty)' \
