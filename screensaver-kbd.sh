@@ -3,7 +3,7 @@
 # Turn off keyboard layout when screensaver starts.
 
 get_switch () {
-    if ps x | grep -q '[s]ynergyc' ; then
+    if ps x | grep -q '[s]ynergys' ; then
         switch=ctrls
     else
         switch=shifts
