@@ -17,18 +17,12 @@ get_switch () {
         date
         echo $state
         if [[ $state == @(LOCK|BLANK) ]] ; then
-            until setxkbmap -query | grep 'layout: *us$' ; do
-                setxkbmap -option '' -option ctrl:nocaps us
-                sleep .1
-            done
+            setxkbmap -option '' -option ctrl:nocaps -layout us
         elif [[ $state == UNBLANK ]] ; then
             switch=$(get_switch)
-            until setxkbmap -query | grep 'layout: *us,cz' ; do
-                setxkbmap -option '' \
-                          -option ctrl:nocaps us,'cz(qwerty)' \
-                          -option grp:${switch}_toggle
-                sleep .1
-            done
+            setxkbmap -option '' \
+                      -option ctrl:nocaps -layout us,'cz(qwerty)' \
+                      -option grp:${switch}_toggle
         fi
     done
 ) &
