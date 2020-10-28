@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use utf8;
+use open OUT => ':encoding(UTF-8)', ':std';
+
+my %charmap = (
+    chr 178 => 'ř',
+    chr 186 => 'ž',
+    chr 188 => 'Č',
+    chr 131 => 'č',
+    chr 207 => 'ě',
+    chr 224 => 'ů',
+    chr 225 => 'á',
+    chr 254 => 'š',
+);
+
+while (<>) {
+    s=(.)=$charmap{$1} // $1=ge;
+    print;
+}
+
+=head1 fixzip
+
+When a zip created on MSWin contains Czech accented characters, the
+encoding of the filenames is invalid. Run the filenames through this
+script to fix them.
+
+=cut
