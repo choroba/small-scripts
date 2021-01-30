@@ -1,4 +1,5 @@
 #!/bin/bash
+dir=/usr/local/bin
 declare -a args
 unset nw
 for arg ; do
@@ -15,9 +16,8 @@ for arg ; do
     args+=("$file")
 done
 
-if [[ -e /tmp/emacs$UID/server ]] ; then
-    [[ $nw ]] || nw=-n
-    /usr/bin/emacsclient $nw "${args[@]}" 2>/dev/null
+if [[ -e /run/user/$UID/emacs/server || -e /tmp/emacs$UID/server ]] ; then
+    "$dir"/emacsclient $nw "${args[@]}" 2>/dev/null
 else
-    /usr/bin/emacs $nw --no-splash "${args[@]}"
+    "$dir"/emacs $nw --no-splash "${args[@]}"
 fi
