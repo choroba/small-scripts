@@ -4,7 +4,7 @@
 # script.pl".
 
 unset PERL5LIB PERL_MM_OPT PERL_MB_OPT PERL_LOCAL_LIB_ROOT
-cmd=$1
+cmd=${1-perl}
 
 shopt -s nullglob
 exec=("$HOME"/localperl/bin/"$cmd"*)
