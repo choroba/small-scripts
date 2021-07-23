@@ -3,6 +3,8 @@
 # with "blead": handles "blead cpan", "blead perldoc open" or "blead
 # script.pl".
 
+bleadpath="$HOME"/blead/bin
+
 unset PERL5LIB PERL_MM_OPT PERL_MB_OPT PERL_LOCAL_LIB_ROOT
 cmd=${1-perl}
 
@@ -10,7 +12,7 @@ shopt -s nullglob
 shopt -s extglob
 lc=$(locale)
 LC_ALL=C
-exec=("$HOME"/localperl/bin/"$cmd"*)
+exec=("$bleadpath/$cmd"*)
 eval $lc
 if [[ ${exec[0]} ]] ; then
     shift
@@ -18,7 +20,7 @@ if [[ ${exec[0]} ]] ; then
 else
     lc=$(locale)
     LC_ALL=C
-    perl=("$HOME"/localperl/bin/perl*)
+    perl=("$bleadpath/perl"*)
     eval $lc
     "${perl[0]}" "$@"
 fi
