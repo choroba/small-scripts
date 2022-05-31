@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+use Getopt::Long qw{ GetOptions };
+use Text::CSV_XS;
+
+GetOptions('d=s' => \ (my $delimiter = ','),
+           'f=s' => \ (my $fields = '1-')
+);
+
+$fields =~ /^
+            (?:[0-9]+
+            (?: - [0-9]* )?
+            ,)*
+            [0-9]+
+            (?: - [0-9]* )?
+           $/x or die "Invalied -f: $fields";
+
+$fields =~ s/-/../g;
+$fields =~ s/-(?=,|$)/END/g;
+
+my $csv = 'Text::CSV_XS'->new({binary    => 1,
+                               auto_diag => 1,
+                               sep_char  => $delimiter,
+                               always_quote => 1});
+for my $file (@ARGV) {
+    open my $in, '<:encoding(UTF-8)', $file or die "$file: $!";
+    my @fields;
+    while (my $row = $csv->getline($in)) {
+        @fields = eval ($fields =~ s/END/$#$row/gr) unless @fields;
+        $csv->say(*STDOUT, [@$row[@fields]]);
+    }
+}
