@@ -1,0 +1,5 @@
+#! /bin/bash
+term=$1
+git log | grep '^commit' | while read _c c ; do
+    git show "$c" | grep "$term" | perl -pe "s/^/\Q$c\E:\t/" -s -- -c="$c"
+done
