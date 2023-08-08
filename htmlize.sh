@@ -17,10 +17,13 @@ if ! emacsclient --eval 't' &> /dev/null ; then
 fi
 
 for file ; do
-    if [[ -f $file ]] ; then
-        if [[ $file -nt $file.html ]] ; then
-            emacsclient --eval '(htmlize-file "'"$file"'")' &> /dev/null
-            ! [[ $file -ot $file.html ]]
+    dir=$(readlink -f "${file%/*}")
+    name=${file##*/}
+    if [[ -f "$file" ]] ; then
+        if [[ "$file" -nt "$file".html ]] ; then
+            emacsclient --eval '(hfy-copy-and-fontify-file "'"$dir"'" "'"$dir"'" "'$name'")'
+            [[ "$file".html -nt "$file" ]]
+            perl -i -ne 'print and next if $. <= 2; $l = /<body / .. m{</body}; print if $l > 1 && $l !~ /E/' "$file".html
         else
             echo "$file.html" already exists >&2
         fi
