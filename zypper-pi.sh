@@ -5,8 +5,8 @@ grep -q '<update ' "$tmp" && xsh <<EOF | less
   quiet ;
   open "$tmp" ;
   for &{ sort :n :k (
-      xsh:match(@name, 'openSUSE(?:-SLE-15\.[34])?-([0-9]{4})-') * 100000
-      + xsh:match(@name, 'openSUSE(?:-SLE-15\.[34])?-[0-9]{4}-([0-9]+)'))
+      xsh:match(@name, 'openSUSE(?:-SLE-15\.[345])?-([0-9]{4})-') * 100000
+      + xsh:match(@name, 'openSUSE(?:-SLE-15\.[345])?-[0-9]{4}-([0-9]+)'))
               ( /stream/update-status/update-list/update
               | /stream/update-status/blocked-update-list/update ) }
       echo @name {"\n"} (summary) {"\n"} (description) {"\n"} {"-" x 76} ;
