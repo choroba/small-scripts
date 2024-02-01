@@ -4,21 +4,24 @@ use strict;
 use utf8;
 use open OUT => ':encoding(UTF-8)', ':std';
 
-my %charmap = (
-    chr 163 => 'ť',
-    chr 178 => 'ř',
-    chr 186 => 'ž',
-    chr 188 => 'Č',
-    chr 131 => 'č',
-    chr 207 => 'ě',
-    chr 213 => 'ň',
-    chr 224 => 'ů',
-    chr 225 => 'á',
-    chr 254 => 'š',
-);
+use List::Util qw{ pairmap };
+
+my %charmap = pairmap { chr oct $a => $b }
+    203 => 'č',
+    243 => 'ť',
+    262 => 'ř',
+    272 => 'ž',
+    274 => 'Č',
+    317 => 'ě',
+    325 => 'ň',
+    340 => 'ů',
+    341 => 'á',
+    376 => 'š';
+
+my $match = join "", '[', keys %charmap, ']';
 
 while (<>) {
-    s=(.)=$charmap{$1} // $1=ge;
+    s/($match)/$charmap{$1}/g;
     print;
 }
 
