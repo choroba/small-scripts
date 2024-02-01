@@ -5,11 +5,13 @@ use utf8;
 use open OUT => ':encoding(UTF-8)', ':std';
 
 my %charmap = (
+    chr 163 => 'ť',
     chr 178 => 'ř',
     chr 186 => 'ž',
     chr 188 => 'Č',
     chr 131 => 'č',
     chr 207 => 'ě',
+    chr 213 => 'ň',
     chr 224 => 'ů',
     chr 225 => 'á',
     chr 254 => 'š',
