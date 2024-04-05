@@ -23,7 +23,7 @@ for file ; do
         if [[ "$file" -nt "$file".html ]] ; then
             emacsclient --eval '(hfy-copy-and-fontify-file "'"$dir"'" "'"$dir"'" "'$name'")'
             [[ "$file".html -nt "$file" ]]
-            perl -i -ne 'print and next if $. <= 2; $l = /<body / .. m{</body}; print if $l > 1 && $l !~ /E/' "$file".html
+            perl -i -ne '$l = /<body / .. m{</body}; print if $l > 1 && $l !~ /E/' "$file".html
         else
             echo "$file.html" already exists >&2
         fi
