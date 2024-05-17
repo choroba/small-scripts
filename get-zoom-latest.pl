@@ -11,7 +11,9 @@ my $fm = 'Firefox::Marionette'->new->go(
 
 $fm->await(sub { $fm->find_class('style-two') });
 for my $h3 ($fm->find_tag('h3')) {
-    if ($h3->text =~ /( version [0-9.]+ )\([0-9]+\)/) {
+    if ($h3->attribute('id')  # Upcoming Release has no id.
+        && $h3->text =~ /( version [0-9.]+ )\([0-9]+\)/
+    ) {
         say $1;
         last
     }
