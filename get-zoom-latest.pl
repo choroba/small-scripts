@@ -4,7 +4,6 @@ use strict;
 use feature qw{ say };
 
 use Firefox::Marionette;
-use Time::Piece;
 
 my $fm = 'Firefox::Marionette'->new->go(
     'https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0061222'
@@ -23,7 +22,7 @@ die 'Linux not found.' if ! defined $column;
 for my $td ($fm->find_tag('td')) {
     if (0 == $column--) {
         my $version = $td->text;
-        print $version =~ s/version|\(.*//gr;
+        say $version =~ s/version|\(.*//gr;
         last
     }
 }
