@@ -7,17 +7,24 @@ use Firefox::Marionette;
 use Time::Piece;
 
 my $fm = 'Firefox::Marionette'->new->go(
-    'https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0068973'
+    'https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0061222'
 );
 
-$fm->await(sub { $fm->find_tag('strong') });
-for my $h3 ($fm->find_tag('h3')) {
-    if ($h3->text =~ /^(\w+ \d+, \d+) (version [0-9.]+ )\([0-9]+\)/) {
-        my $release_date = 'Time::Piece'->strptime($1, '%B %d, %Y');
-        if ($release_date <= localtime) {
-            say $2;
-            last
-        }
+$fm->await(sub { $fm->find_tag('article') });
+my $column;
+for my $th ($fm->find_tag('th')) {
+    if ('Linux' eq $th->text) {
+        $column = $th->attribute('data-col');
+        last
+    }
+}
+die 'Linux not found.' if ! defined $column;
+
+for my $td ($fm->find_tag('td')) {
+    if (0 == $column--) {
+        my $version = $td->text;
+        print $version =~ s/version|\(.*//gr;
+        last
     }
 }
 
