@@ -10,21 +10,32 @@ my $fm = 'Firefox::Marionette'->new->go(
 );
 
 $fm->await(sub { $fm->find_tag('article') });
-my $column;
-for my $th ($fm->find_tag('th')) {
-    if ('Linux' eq $th->text) {
-        $column = $th->attribute('data-col');
-        last
-    }
-}
-die 'Linux not found.' if ! defined $column;
 
-for my $td ($fm->find_tag('td')) {
-    if (0 == $column--) {
-        my $version = $td->text;
+my $stage = "START";
+my $column;
+for my $element ($fm->find('(//h2 | //th | //td)')) {
+    if ('START' eq $stage
+        && 'h2' eq $element->tag_name
+        && 'Released' eq $element->text
+    ) {
+        $stage = 'RELEASED';
+
+    } elsif ('RELEASED' eq $stage
+             && 'th' eq $element->tag_name
+             && 'Linux' eq $element->text
+    ) {
+        $column = $element->attribute('data-col');
+        $stage = 'TABLE';
+
+    } elsif ('TABLE' eq $stage
+             && 'td' eq $element->tag_name
+             && 0 == $column--
+    ) {
+        my $version = $element->text;
         say $version =~ s/version|\(.*//gr;
-        last
+        exit
     }
 }
+die 'Linux not found.';
 
 # Fetch the latest zoom client version from the Angular heavy zoom page.
