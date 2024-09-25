@@ -23,6 +23,6 @@ if ((!ok)) ; then
     (   app=$1
         app=${app%-gtk}
         type "$app" &>/dev/null || warn "Cannot find or start $1"
-        "$app"
+        exec "$app"
     ) &
 fi
