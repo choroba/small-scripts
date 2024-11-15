@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Redirect stdout/err to files. Useful for xargs -P or srun on slurm.
+
+set -eu -o pipefail
+shopt -s extglob
+
+cmd=${1##*/}
+cmd=${cmd%.@(sh|pl)}
+
+ts=$(date +%y%m%d%H%M%S%N)
+
+exec "$@" > "$cmd".$$.$ts.o 2> "$cmd".$$.$ts.e
