@@ -1,5 +1,5 @@
 #! /bin/bash
-zenity --text-info \
+yad --text-info \
     --title=Date \
     --filename=<(echo -n $(date +%y/%m/%d) ) \
     --timeout=3 \

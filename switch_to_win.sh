@@ -1,7 +1,7 @@
 #! /bin/bash
 
 function warn () {
-    zenity --warning --title 'Switch to window' --text "$1 not found!"
+    yad --image dialog-warning --title 'Switch to window' --text "$1 not found!"
 }
 
 app="$1"
