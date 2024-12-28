@@ -17,7 +17,7 @@ for arg ; do
 done
 
 if [[ -e /run/user/$UID/emacs/server || -e /tmp/emacs$UID/server ]] ; then
-    "$dir"/emacsclient $nw "${args[@]}" 2>/dev/null
+    exec "$dir"/emacsclient $nw "${args[@]}" 2>/dev/null
 else
-    "$dir"/emacs $nw --no-splash "${args[@]}"
+    exec "$dir"/emacs $nw --no-splash "${args[@]}"
 fi
