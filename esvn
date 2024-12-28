@@ -3,4 +3,4 @@ if ((0==$#)) ; then
     set -- "$PWD"
 fi
 
-emacs -e '(svn-status "'"$(readlink -f "$1")"'")'
+emacs -e '(vc-dir "'"$(readlink -f "$1")"'")'
