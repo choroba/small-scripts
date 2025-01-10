@@ -21,8 +21,8 @@ for file ; do
     name=${file##*/}
     if [[ -f "$file" ]] ; then
         if [[ "$file" -nt "$file".html ]] ; then
-            emacsclient --eval '(hfy-copy-and-fontify-file "'"$dir"'" "'"$dir"'" "'$name'")'
-            [[ "$file".html -nt "$file" ]]
+            emacsclient --eval '(progn(hl-line-mode 1)(set-language-environment "UTF-8")(hfy-copy-and-fontify-file "'"$dir"'" "'"$dir"'" "'"$name"'"))'
+            [[ $file.html -nt $file ]]
             perl -i -ne '$l = /<body / .. m{</body}; print if $l > 1 && $l !~ /E/' "$file".html
         else
             echo "$file.html" already exists >&2
