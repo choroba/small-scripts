@@ -2,8 +2,6 @@
 use warnings;
 use strict;
 
-#use Data::Dumper;
-
 my $words = '/usr/share/dict/british-english';
 open my $IN, '<', $words or die $!;
 1 while (<$IN>);
@@ -11,12 +9,15 @@ my $line_count = $.;
 
 my $passwd = q();
 my $word_count = 0;
-while (10 > length $passwd or 2 > $word_count) {
+while (10 > length $passwd or 3 > $word_count) {
     seek $IN, $. = 0, 0;
     my $line = int rand $line_count;
     <$IN> for 1 .. $line;
     chomp(my $word = <$IN>);
     $word =~ s/'s//;
+    redo if $word =~ /[^a-z]/ || 4 >  length $word;
+
+    $passwd .= int rand 10 if $word_count;
     $passwd .= ucfirst $word;
     $word_count++;
 }
