@@ -16,5 +16,5 @@ $opt_f=~s/-/../g;
 while(<>){
   chomp;
   @fld=split/\Q$opt_d\E/;
-  print join($opt_o,@fld[@idx]),"\n";
+  print join($opt_o,@fld[grep -$_-1 <= $#fld, @idx]),"\n";
 }
