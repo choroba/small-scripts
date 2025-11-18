@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Change zoom settings to disable the miniwindow on lost focus.
+
+sed -i 's/enableMiniWindow=true/enableMiniWindow=false/' ~/.config/zoomus.conf
