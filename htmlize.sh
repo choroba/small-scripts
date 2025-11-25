@@ -1,8 +1,6 @@
 #! /bin/bash
 set -eu
 
-server_file=/tmp/emacs$UID/server
-
 new_emacs=0
 if ! emacsclient --eval 't' &> /dev/null ; then
     echo Starting emacs... >&2
@@ -13,6 +11,7 @@ if ! emacsclient --eval 't' &> /dev/null ; then
         ((++i > 20)) && break
     done
     new_emacs=1
+    server_file=$(emacsclient --eval 'server-socket-dir' | cut -d\" -f2)
     [[ -e $server_file ]]
 fi
 
