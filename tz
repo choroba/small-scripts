@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use feature qw{ say };
+
+use Time::Piece;
+
+if (! @ARGV || $ARGV[0] =~ /--?h(?:elp)/) {
+    say 'tz FROM(TZ) FROM(YY/MM/DDTHH:MM) [ TO(TZ) ]';
+    exit
+}
+
+my ($from_tz, $from_date, $to_tz) = @ARGV;
+chomp( $to_tz //= qx{ date +%Z } );
+
+-f "/usr/share/zoneinfo/$from_tz" or warn "$from_tz might be wrong.\n";
+-f "/usr/share/zoneinfo/$to_tz" or warn "$to_tz might be wrong.\n";
+
+$ENV{TZ} = $to_tz;
+
+my $tp = do {
+    local $ENV{TZ} = $from_tz;
+    localtime->strptime($from_date, '%y/%m/%dT%H:%M');
+};
+say $tp->strftime("%y/%m/%d %H:%M:%S %Z");
