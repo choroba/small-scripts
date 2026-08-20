@@ -5,7 +5,7 @@ if (( $? )) ; then
 fi
 
 if [[ $state = blocked ]] ; then
-    rfkill unblock bluetooth
+    /usr/sbin/rfkill unblock bluetooth
 fi
 if [[ $state = *Powered:' 'yes* ]] ; then
     bluetoothctl power off
