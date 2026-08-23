@@ -3,6 +3,7 @@ use warnings;
 use strict;
 use feature qw{ say };
 
+use POSIX qw{ tzset };
 use Time::Piece;
 
 if (! @ARGV || $ARGV[0] =~ /--?h(?:elp)/) {
@@ -17,9 +18,13 @@ chomp( $to_tz //= qx{ date +%Z } );
 -f "/usr/share/zoneinfo/$to_tz" or warn "$to_tz might be wrong.\n";
 
 $ENV{TZ} = $to_tz;
+tzset();
+my $tp = localtime->strptime($from_date, '%y/%m/%dT%H:%M');
 
-my $tp = do {
-    local $ENV{TZ} = $from_tz;
-    localtime->strptime($from_date, '%y/%m/%dT%H:%M');
-};
-say $tp->strftime("%y/%m/%d %H:%M:%S %Z");
+$ENV{TZ} = $from_tz;
+tzset();
+my $target_tp = localtime($tp->epoch);
+
+$ENV{TZ} = $to_tz;
+tzset();
+say $target_tp->strftime("%y/%m/%d %H:%M:%S %Z");
