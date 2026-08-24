@@ -17,11 +17,19 @@ chomp( $to_tz //= qx{ date +%Z } );
 -f "/usr/share/zoneinfo/$to_tz" or warn "$to_tz might be wrong.\n";
 
 $ENV{TZ} = $to_tz;
-my $tp = localtime->strptime($from_date, '%y/%m/%dT%H:%M');
+if ($Time::Piece::VERSION < 1.36) {
+    my $tp = do {
+        local $ENV{TZ} = $from_tz;
+        localtime->strptime($from_date, '%y/%m/%dT%H:%M');
+    };
+    say $tp->strftime("%y/%m/%d %H:%M:%S %Z");
 
-my $target_tp = do {
-    local $ENV{TZ} = $from_tz;
-    localtime($tp->epoch)
-};
+} else {
+    my $tp = localtime->strptime($from_date, '%y/%m/%dT%H:%M');
 
-say $target_tp->strftime("%y/%m/%d %H:%M:%S %Z");
+    my $target_tp = do {
+        local $ENV{TZ} = $from_tz;
+        localtime($tp->epoch)
+    };
+    say $target_tp->strftime("%y/%m/%d %H:%M:%S %Z");
+}
